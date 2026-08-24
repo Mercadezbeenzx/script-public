@@ -87,8 +87,17 @@ end
 function sendChatMessage(B)
 pcall(function()
 if d.ChatVersion==Enum.ChatVersion.TextChatService then
-local C=d.TextChannels.RBXGeneral
-if C then C:SendAsync(B)end
+local C=d.TextChannels:FindFirstChild"RBXGeneral"
+if C then
+C:SendAsync(B)
+else
+for D,E in ipairs(d.TextChannels:GetChildren())do
+if E:IsA"TextChannel"then
+E:SendAsync(B)
+break
+end
+end
+end
 else
 b.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(B,"All")
 end
@@ -235,6 +244,7 @@ end
 end
 end
 
+pcall(function()
 if d.ChatVersion==Enum.ChatVersion.TextChatService then
 x=d.MessageReceived:Connect(function(B)
 if B.TextSource then
@@ -242,12 +252,13 @@ local C=a:GetPlayerByUserId(B.TextSource.UserId)
 processIncoming(C,B.Text)
 end
 end)
-else
-for B,C in ipairs(a:GetPlayers())do
-C.Chatted:Connect(function(D)
+end
+end)
+
+if not x then
+x=a.PlayerChatted:Connect(function(B,C,D)
 processIncoming(C,D)
 end)
-end
 end
 end
 
@@ -733,7 +744,7 @@ setupChatMimic()
 B:Notify{Title="Chat Mimic",Content="Mimic Active.",Duration=2}
 else
 if x then x:Disconnect()end
-B:Notify{Title="Chat Mimic",Content="Mimic Disabled.",Duration=2}
+B:Notify{Title="Chat mimic",Content="Mimic Disabled.",Duration=2}
 end
 end,
 }
