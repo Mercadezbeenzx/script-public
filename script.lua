@@ -301,121 +301,102 @@ end,
 local G=C:CreateTab("Visuals",4483362458)
 
 local H={}
-local I={}
 
-local function clearHighlights()
-for J,K in ipairs(H)do
-if K and K.Parent then
-K:Destroy()
-end
-end
-H={}
-end
-
+local I=false
 local J=false
-local K=false
 
-local L=Color3.fromRGB(255,50,50)
-local M=Color3.fromRGB(255,255,255)
+local K=Color3.fromRGB(255,50,50)
+local L=Color3.fromRGB(255,255,255)
 
-local N=Color3.fromRGB(0,200,255)
-local O=Color3.fromRGB(255,255,255)
+local M=Color3.fromRGB(0,200,255)
+local N=Color3.fromRGB(255,255,255)
 
-local function highlightModel(P,Q)
-if not P or P==getLocalCharacter()then return end
+local function getHighlightColor(O,P)
+if P then
+return M,N
+else
+return K,L
+end
+end
 
-local R=P:FindFirstChildOfClass"Humanoid"
-if not R then return end
+local function updateModelHighlight(O,P)
+if not O or O==getLocalCharacter()then return end
 
-if not P:FindFirstChildOfClass"Highlight"then
-if not Q and J then
-local S=Instance.new"Highlight"
-S.Name="NPCHighlight"
-S.Adornee=P
-S.FillColor=L
+local Q=O:FindFirstChildOfClass"Humanoid"
+if not Q then return end
+
+local R=(P and J)or(not P and I)
+local S=O:FindFirstChild"PersistentHighlight"
+
+if R then
+local T,U=getHighlightColor(O,P)
+if not S then
+S=Instance.new"Highlight"
+S.Name="PersistentHighlight"
+S.Adornee=O
 S.FillTransparency=0.5
-S.OutlineColor=M
 S.OutlineTransparency=0
 S.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
-S.Parent=P
-table.insert(H,S)
-elseif Q and K then
-local S=Instance.new"Highlight"
-S.Name="PlayerHighlight"
-S.Adornee=P
-S.FillColor=N
-S.FillTransparency=0.5
-S.OutlineColor=O
-S.OutlineTransparency=0
-S.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
-S.Parent=P
-table.insert(H,S)
+S.Parent=O
+end
+S.FillColor=T
+S.OutlineColor=U
+else
+if S then
+S:Destroy()
 end
 end
 end
 
 local function applyHighlights()
-clearHighlights()
-
-for P,Q in ipairs(workspace:GetDescendants())do
-if Q:IsA"Model"then
-local R=a:GetPlayerFromCharacter(Q)~=nil
-highlightModel(Q,R)
+for O,P in ipairs(workspace:GetDescendants())do
+if P:IsA"Model"and P:FindFirstChildOfClass"Humanoid"then
+local Q=a:GetPlayerFromCharacter(P)~=nil
+updateModelHighlight(P,Q)
 end
 end
 end
 
 local function setupAutoHighlighting()
-for P,Q in ipairs(I)do
-if typeof(Q)=="RBXScriptConnection"then
-Q:Disconnect()
+for O,P in ipairs(H)do
+if typeof(P)=="RBXScriptConnection"then
+P:Disconnect()
 end
 end
-I={}
+H={}
 
-local function onCharacterAdded(P,Q)
-task.wait(0.5)
-if P and P.Parent then
-highlightModel(P,Q)
-end
-end
+local function trackModel(O)
+local P=O:FindFirstChildOfClass"Humanoid"
+if P then
+local Q=a:GetPlayerFromCharacter(O)~=nil
+updateModelHighlight(O,Q)
 
-for P,Q in ipairs(a:GetPlayers())do
-if Q~=e then
-local R=Q.CharacterAdded:Connect(function(R)
-onCharacterAdded(R,true)
+local R
+R=O.AncestryChanged:Connect(function(S,T)
+if not T then
+if R then R:Disconnect()end
+end
 end)
-table.insert(I,R)
-if Q.Character then
-onCharacterAdded(Q.Character,true)
-end
+table.insert(H,R)
 end
 end
 
-local P=a.PlayerAdded:Connect(function(P)
-if P~=e then
-local Q=P.CharacterAdded:Connect(function(Q)
-onCharacterAdded(Q,true)
-end)
-table.insert(I,Q)
-if P.Character then
-onCharacterAdded(P.Character,true)
-end
+local O=workspace.DescendantAdded:Connect(function(O)
+if O:IsA"Model"then
+task.delay(0.3,function()
+if O and O.Parent then
+trackModel(O)
 end
 end)
-table.insert(I,P)
+end
+end)
+table.insert(H,O)
 
-local Q=workspace.DescendantAdded:Connect(function(Q)
-if Q:IsA"Model"and Q:FindFirstChildOfClass"Humanoid"then
-local R=a:GetPlayerFromCharacter(Q)~=nil
-if(R and K)or(not R and J)then
-task.delay(0.2,function()
-highlightModel(Q,R)
-end)
+for P,Q in ipairs(workspace:GetDescendants())do
+if Q:IsA"Model"then
+trackModel(Q)
 end
 end
-end)
-table.insert(I,Q)
 end
 
 setupAutoHighlighting()
@@ -426,8 +407,8 @@ G:CreateToggle{
 Name="Highlight NPCs",
 CurrentValue=false,
 Flag="NPCHighlightToggle",
-Callback=function(P)
-J=P
+Callback=function(O)
+I=O
 applyHighlights()
 end,
 }
@@ -436,8 +417,8 @@ G:CreateToggle{
 Name="Highlight Players",
 CurrentValue=false,
 Flag="PlayerHighlightToggle",
-Callback=function(P)
-K=P
+Callback=function(O)
+J=O
 applyHighlights()
 end,
 }
@@ -446,20 +427,20 @@ G:CreateSection"NPC Colors"
 
 G:CreateColorPicker{
 Name="NPC Fill Color",
-Color=L,
+Color=K,
 Flag="NPCFillColorPicker",
-Callback=function(P)
-L=P
+Callback=function(O)
+K=O
 applyHighlights()
 end,
 }
 
 G:CreateColorPicker{
 Name="NPC Outline Color",
-Color=M,
+Color=L,
 Flag="NPCOutlineColorPicker",
-Callback=function(P)
-M=P
+Callback=function(O)
+L=O
 applyHighlights()
 end,
 }
@@ -468,20 +449,20 @@ G:CreateSection"Player Colors"
 
 G:CreateColorPicker{
 Name="Player Fill Color",
-Color=N,
+Color=M,
 Flag="PlayerFillColorPicker",
-Callback=function(P)
-N=P
+Callback=function(O)
+M=O
 applyHighlights()
 end,
 }
 
 G:CreateColorPicker{
 Name="Player Outline Color",
-Color=O,
+Color=N,
 Flag="PlayerOutlineColorPicker",
-Callback=function(P)
-O=P
+Callback=function(O)
+N=O
 applyHighlights()
 end,
 }
@@ -496,181 +477,181 @@ B:Notify{Title="Visuals",Content="Refreshed highlights.",Duration=2}
 end,
 }
 
-local P=C:CreateTab("Player & Utility",4483362458)
+local O=C:CreateTab("Player & Utility",4483362458)
 
-P:CreateSection"Movement Controls"
+O:CreateSection"Movement Controls"
 
-P:CreateToggle{
+O:CreateToggle{
 Name="Noclip",
 CurrentValue=false,
 Flag="NoclipToggle",
-Callback=function(Q)
-k=Q
+Callback=function(P)
+k=P
 B:Notify{Title="Noclip",Content=k and"Enabled"or"Disabled",Duration=2}
 end,
 }
 
-local Q=P:CreateSlider{
+local P=O:CreateSlider{
 Name="WalkSpeed",
 Range={16,250},
 Increment=1,
 Suffix=" spd",
 CurrentValue=16,
 Flag="WalkSpeedSlider",
-Callback=function(Q)
-l=Q
-n=(Q~=16)
+Callback=function(P)
+l=P
+n=(P~=16)
 
-local R=getLocalCharacter()
+local Q=getLocalCharacter()
+if Q then
+local R=Q:FindFirstChildOfClass"Humanoid"
 if R then
-local S=R:FindFirstChildOfClass"Humanoid"
-if S then
-S.WalkSpeed=Q
+R.WalkSpeed=P
 end
 end
 end,
 }
 
-local R=P:CreateSlider{
+local Q=O:CreateSlider{
 Name="JumpPower",
 Range={50,300},
 Increment=5,
 Suffix=" pwr",
 CurrentValue=50,
 Flag="JumpPowerSlider",
-Callback=function(R)
-m=R
-o=(R~=50)
+Callback=function(Q)
+m=Q
+o=(Q~=50)
 
-local S=getLocalCharacter()
+local R=getLocalCharacter()
+if R then
+local S=R:FindFirstChildOfClass"Humanoid"
 if S then
-local T=S:FindFirstChildOfClass"Humanoid"
-if T then
-T.UseJumpPower=true
-T.JumpPower=R
+S.UseJumpPower=true
+S.JumpPower=Q
 end
 end
 end,
 }
 
-P:CreateButton{
+O:CreateButton{
 Name="Reset Movement Defaults",
 Callback=function()
-Q:Set(16)
-R:Set(50)
+P:Set(16)
+Q:Set(50)
 n=false
 o=false
 B:Notify{Title="Movement",Content="Speed & Jump reset to default.",Duration=2}
 end,
 }
 
-P:CreateSection"Animation Controls"
+O:CreateSection"Animation Controls"
 
-P:CreateToggle{
+O:CreateToggle{
 Name="Dynamic Animation Scaling",
 CurrentValue=false,
 Flag="DynamicAnimToggle",
-Callback=function(S)
-p=S
-if not S then
-local T=getLocalCharacter()
+Callback=function(R)
+p=R
+if not R then
+local S=getLocalCharacter()
+if S then
+local T=S:FindFirstChildOfClass"Humanoid"
 if T then
-local U=T:FindFirstChildOfClass"Humanoid"
+local U=T:FindFirstChildOfClass"Animator"
 if U then
-local V=U:FindFirstChildOfClass"Animator"
-if V then
-for W,X in ipairs(V:GetPlayingAnimationTracks())do
-X:AdjustSpeed(1.0)
+for V,W in ipairs(U:GetPlayingAnimationTracks())do
+W:AdjustSpeed(1.0)
 end
 end
 end
 end
 end
-B:Notify{Title="Animations",Content=S and"Dynamic Scaling Enabled"or"Reset to Normal",Duration=2}
+B:Notify{Title="Animations",Content=R and"Dynamic Scaling Enabled"or"Reset to Normal",Duration=2}
 end,
 }
 
-P:CreateSection"Whistle Loop"
+O:CreateSection"Whistle Loop"
 
-P:CreateToggle{
+O:CreateToggle{
 Name="Auto Whistle",
 CurrentValue=false,
 Flag="WhistleToggle",
-Callback=function(S)
-r=S
-if S then
+Callback=function(R)
+r=R
+if R then
 startWhistleThread()
 else
 stopWhistleThread()
 end
-B:Notify{Title="Whistle",Content=S and"Whistle loop started"or"Whistle loop stopped",Duration=2}
+B:Notify{Title="Whistle",Content=R and"Whistle loop started"or"Whistle loop stopped",Duration=2}
 end,
 }
 
-P:CreateSlider{
+O:CreateSlider{
 Name="Whistle Delay",
 Range={0.45,5.0},
 Increment=0.05,
 Suffix="s",
 CurrentValue=0.45,
 Flag="WhistleDelaySlider",
-Callback=function(S)
-s=math.max(S,0.45)
+Callback=function(R)
+s=math.max(R,0.45)
 end,
 }
 
-P:CreateSection"Teleportation"
+O:CreateSection"Teleportation"
 
-local S
+local R
+local S={}
 local T={}
-local U={}
-local V
+local U
 
 local function updatePlayerTPList()
+S={}
 T={}
-U={}
-for W,X in ipairs(a:GetPlayers())do
-if X~=e then
-local Y=X.DisplayName.." (@"..X.Name..")"
-table.insert(U,Y)
-T[Y]=X
+for V,W in ipairs(a:GetPlayers())do
+if W~=e then
+local X=W.DisplayName.." (@"..W.Name..")"
+table.insert(T,X)
+S[X]=W
 end
 end
-if#U==0 then
-table.insert(U,"No Players Found")
+if#T==0 then
+table.insert(T,"No Players Found")
 end
-if V then
-V:Refresh(U)
-S=T[U[1] ]
+if U then
+U:Refresh(T)
+R=S[T[1] ]
 end
 end
 
 updatePlayerTPList()
 
-V=P:CreateDropdown{
+U=O:CreateDropdown{
 Name="Select Player to Teleport",
-Options=U,
-CurrentOption=U[1]or"No Players Found",
+Options=T,
+CurrentOption=T[1]or"No Players Found",
 Flag="PlayerTPDropdown",
-Callback=function(W)
-if type(W)=="table"then W=W[1]end
-S=T[W]
+Callback=function(V)
+if type(V)=="table"then V=V[1]end
+R=S[V]
 end,
 }
 
-local W=a.PlayerAdded:Connect(function()
+local V=a.PlayerAdded:Connect(function()
 task.wait(0.2)
 updatePlayerTPList()
 end)
-table.insert(I,W)
+table.insert(H,V)
 
-local X=a.PlayerRemoving:Connect(function()
+local W=a.PlayerRemoving:Connect(function()
 task.wait(0.1)
 updatePlayerTPList()
 end)
-table.insert(I,X)
+table.insert(H,W)
 
-P:CreateButton{
+O:CreateButton{
 Name="Refresh Player List",
 Callback=function()
 updatePlayerTPList()
@@ -678,23 +659,23 @@ B:Notify{Title="Player List",Content="Refreshed active players.",Duration=2}
 end,
 }
 
-P:CreateButton{
+O:CreateButton{
 Name="Teleport to Player",
 Callback=function()
-if S and S.Character then
-local Y=S.Character:FindFirstChild"HumanoidRootPart"
-local Z=getLocalCharacter()
-if Z and Y then
-local _=Z:FindFirstChild"HumanoidRootPart"
-if _ then
-local aa=Y.Position+Vector3.new(0,3,3)
+if R and R.Character then
+local X=R.Character:FindFirstChild"HumanoidRootPart"
+local Y=getLocalCharacter()
+if Y and X then
+local Z=Y:FindFirstChild"HumanoidRootPart"
+if Z then
+local _=X.Position+Vector3.new(0,3,3)
 task.spawn(function()
 pcall(function()
-e:RequestStreamAroundAsync(aa)
+e:RequestStreamAroundAsync(_)
 end)
 task.wait(0.1)
-Z:PivotTo(CFrame.new(aa))
-B:Notify{Title="Teleported",Content="Arrived at "..S.Name,Duration=2}
+Y:PivotTo(CFrame.new(_))
+B:Notify{Title="Teleported",Content="Arrived at "..R.Name,Duration=2}
 end)
 end
 end
@@ -702,22 +683,22 @@ end
 end,
 }
 
-local aa=C:CreateTab("Chat Mimic",4483362458)
+local X=C:CreateTab("Chat Mimic",4483362458)
 
-aa:CreateSection"Target & Mode Selection"
+X:CreateSection"Target & Mode Selection"
 
-aa:CreateDropdown{
+X:CreateDropdown{
 Name="Target Player",
-Options=U,
-CurrentOption=U[1]or"No Players Found",
+Options=T,
+CurrentOption=T[1]or"No Players Found",
 Flag="MimicTargetDropdown",
 Callback=function(Y)
 if type(Y)=="table"then Y=Y[1]end
-u.TargetPlayer=T[Y]
+u.TargetPlayer=S[Y]
 end,
 }
 
-aa:CreateDropdown{
+X:CreateDropdown{
 Name="Mimic Mode",
 Options={"Glitched","Reverse","Whisper","Delayed","Fake Panic"},
 CurrentOption="Glitched",
@@ -728,7 +709,7 @@ u.Mode=Y
 end,
 }
 
-aa:CreateToggle{
+X:CreateToggle{
 Name="Enable Chat Mimic",
 CurrentValue=false,
 Flag="MimicToggle",
@@ -744,9 +725,9 @@ end
 end,
 }
 
-aa:CreateSection"Fine-Tuning Settings"
+X:CreateSection"Fine-Tuning Settings"
 
-aa:CreateSlider{
+X:CreateSlider{
 Name="Mimic Trigger Chance",
 Range={10,100},
 Increment=5,
@@ -754,11 +735,11 @@ Suffix="%",
 CurrentValue=100,
 Flag="MimicChanceSlider",
 Callback=function(Y)
-u.MimicChance=Y
+ChatMimicCount=Y
 end,
 }
 
-aa:CreateSlider{
+X:CreateSlider{
 Name="Distortion Delay (Delayed Mode)",
 Range={15,120},
 Increment=5,
@@ -788,23 +769,27 @@ if y then y:Disconnect()end
 if z then z:Disconnect()end
 if A then A:Disconnect()end
 
-for Z,_ in ipairs(I)do
+for Z,_ in ipairs(H)do
 if typeof(_)=="RBXScriptConnection"then
 _:Disconnect()
 end
 end
-I={}
+H={}
 
-clearHighlights()
+for Z,_ in ipairs(workspace:GetDescendants())do
+if _:IsA"Highlight"and _.Name=="PersistentHighlight"then
+_:Destroy()
+end
+end
 
 local Z=getLocalCharacter()
 if Z then
 local _=Z:FindFirstChildOfClass"Humanoid"
 if _ then
-local ab=_:FindFirstChildOfClass"Animator"
-if ab then
-for ac,ad in ipairs(ab:GetPlayingAnimationTracks())do
-ad:AdjustSpeed(1.0)
+local aa=_:FindFirstChildOfClass"Animator"
+if aa then
+for ab,ac in ipairs(aa:GetPlayingAnimationTracks())do
+ac:AdjustSpeed(1.0)
 end
 end
 end
