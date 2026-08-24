@@ -735,7 +735,7 @@ Suffix="%",
 CurrentValue=100,
 Flag="MimicChanceSlider",
 Callback=function(Y)
-ChatMimicCount=Y
+u.MimicChance=Y
 end,
 }
 
