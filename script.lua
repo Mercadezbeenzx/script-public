@@ -55,8 +55,7 @@ FontType="FullWidth",
 MimicChance=100,
 MinDelay=1,
 MaxDelay=2,
-DistortionDelay=45,
-CorruptIntensity=3
+DistortionDelay=45
 }
 
 local v={}
@@ -138,21 +137,7 @@ return applyFont(C:reverse(),u.FontType)
 elseif u.Mode=="Whisper"then
 return applyFont("... "..C:lower().." ...",u.FontType)
 
-elseif u.Mode=="Corrupted Echo"then
-local D={".","_","/","~","-"}
-local E={}
-for F=1,#C do
-table.insert(E,C:sub(F,F))
-end
-for F=1,u.CorruptIntensity do
-if#E>0 then
-local G=math.random(1,#E)
-E[G]=D[math.random(1,#D)]
-end
-end
-return applyFont(table.concat(E),u.FontType)
-
-elseif u.Mode=="Delayed Distortion"then
+elseif u.Mode=="Delayed"then
 table.insert(v,C)
 task.delay(u.DistortionDelay,function()
 if#v>0 then
@@ -372,6 +357,7 @@ if not Q or Q==getLocalCharacter()then return end
 local S=Q:FindFirstChildOfClass"Humanoid"
 if not S then return end
 
+if not Q:FindFirstChildOfClass"Highlight"then
 if not R and K then
 local T=Instance.new"Highlight"
 T.Name="NPCHighlight"
@@ -396,6 +382,7 @@ T.Parent=Q
 table.insert(I,T)
 end
 end
+end
 
 local function applyHighlights()
 clearHighlights()
@@ -410,35 +397,55 @@ end
 
 local function setupAutoHighlighting()
 for Q,R in ipairs(J)do
+if typeof(R)=="RBXScriptConnection"then
 R:Disconnect()
+end
 end
 J={}
 
 local function onCharacterAdded(Q,R)
 task.wait(0.5)
-if L then
-highlightModel(Q,true)
-end
-end
-
-local function onPlayerAdded(Q)
-local R=Q.CharacterAdded:Connect(function(R)
-onCharacterAdded(R,Q)
-end)
-table.insert(J,R)
-if Q.Character then
-onCharacterAdded(Q.Character,Q)
+if Q and Q.Parent then
+highlightModel(Q,R)
 end
 end
 
 for Q,R in ipairs(a:GetPlayers())do
 if R~=e then
-onPlayerAdded(R)
+local S=R.CharacterAdded:Connect(function(S)
+onCharacterAdded(S,true)
+end)
+table.insert(J,S)
+if R.Character then
+onCharacterAdded(R.Character,true)
+end
 end
 end
 
-local Q=a.PlayerAdded:Connect(onPlayerAdded)
+local Q=a.PlayerAdded:Connect(function(Q)
+if Q~=e then
+local R=Q.CharacterAdded:Connect(function(R)
+onCharacterAdded(R,true)
+end)
+table.insert(J,R)
+if Q.Character then
+onCharacterAdded(Q.Character,true)
+end
+end
+end)
 table.insert(J,Q)
+
+local R=workspace.DescendantAdded:Connect(function(R)
+if R:IsA"Model"and R:FindFirstChildOfClass"Humanoid"then
+local S=a:GetPlayerFromCharacter(R)~=nil
+if(S and L)or(not S and K)then
+task.delay(0.2,function()
+highlightModel(R,S)
+end)
+end
+end
+end)
+table.insert(J,R)
 end
 
 setupAutoHighlighting()
@@ -664,6 +671,7 @@ table.insert(V,"No Players Found")
 end
 if W then
 W:Refresh(V)
+T=U[V[1] ]
 end
 end
 
@@ -681,7 +689,7 @@ end,
 }
 
 local X=a.PlayerAdded:Connect(function()
-task.wait(0.5)
+task.wait(0.2)
 updatePlayerTPList()
 end)
 table.insert(J,X)
@@ -696,6 +704,7 @@ Q:CreateButton{
 Name="Refresh Player List",
 Callback=function()
 updatePlayerTPList()
+C:Notify{Title="Player List",Content="Refreshed active players.",Duration=2}
 end,
 }
 
@@ -740,7 +749,7 @@ end,
 
 aa:CreateDropdown{
 Name="Mimic Mode",
-Options={"Glitched","Reverse","Whisper","Corrupted Echo","Delayed Distortion","Fake Panic"},
+Options={"Glitched","Reverse","Whisper","Delayed","Fake Panic"},
 CurrentOption="Glitched",
 Flag="MimicModeDropdown",
 Callback=function(ab)
@@ -791,18 +800,6 @@ end,
 }
 
 aa:CreateSlider{
-Name="Corrupt Intensity (Corrupted Mode)",
-Range={1,10},
-Increment=1,
-Suffix=" chars",
-CurrentValue=3,
-Flag="MimicCorruptSlider",
-Callback=function(ab)
-u.CorruptIntensity=ab
-end,
-}
-
-aa:CreateSlider{
 Name="Distortion Delay (Delayed Mode)",
 Range={15,120},
 Increment=5,
@@ -833,7 +830,9 @@ if A then A:Disconnect()end
 if B then B:Disconnect()end
 
 for Z,_ in ipairs(J)do
+if typeof(_)=="RBXScriptConnection"then
 _:Disconnect()
+end
 end
 J={}
 
