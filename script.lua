@@ -130,7 +130,17 @@ local C=getLocalCharacter()
 if C then
 for D,E in ipairs(C:GetDescendants())do
 if E:IsA"BasePart"then
-E.CanCollide=B
+if B then
+if E.Name=="HumanoidRootPart"then
+E.CanCollide=false
+elseif E:IsA"MeshPart"or E.Name=="Head"or E.Name=="Torso"or string.find(E.Name,"Leg")or string.find(E.Name,"Arm")then
+E.CanCollide=true
+elseif E.Parent:IsA"Accessory"or E.Parent:IsA"Hat"then
+E.CanCollide=false
+end
+else
+E.CanCollide=false
+end
 end
 end
 end
@@ -487,6 +497,9 @@ CurrentValue=false,
 Flag="NoclipToggle",
 Callback=function(P)
 k=P
+if not P then
+setCharacterCollisions(true)
+end
 B:Notify{Title="Noclip",Content=k and"Enabled"or"Disabled",Duration=2}
 end,
 }
@@ -751,11 +764,20 @@ u.DistortionDelay=Y
 end,
 }
 
-local Y=C:CreateTab("Settings",4483362458)
+local Y=C:CreateTab("Info",4483362458)
 
-Y:CreateSection"GUI Management"
+Y:CreateSection"Feature Guide"
 
-Y:CreateButton{
+Y:CreateParagraph{Title="Stamina Controls",Content="Adjusts your sprint drain and gain rates in real-time, or gives you infinite sprint."}
+Y:CreateParagraph{Title="Visuals (ESP)",Content="Highlights players and NPCs through walls with customizable colors and outline modes."}
+Y:CreateParagraph{Title="Player & Utility",Content="Includes Noclip, custom WalkSpeed/JumpPower, smooth animation speed scaling, an auto-whistle loop, and player teleports."}
+Y:CreateParagraph{Title="Chat Mimic",Content="Monitors a target player's chat and repeats their messages with creepy distortions like reverse text or fake panic."}
+
+local Z=C:CreateTab("Settings",4483362458)
+
+Z:CreateSection"GUI Management"
+
+Z:CreateButton{
 Name="Unload GUI",
 Callback=function()
 r=false
@@ -769,27 +791,27 @@ if y then y:Disconnect()end
 if z then z:Disconnect()end
 if A then A:Disconnect()end
 
-for Z,_ in ipairs(H)do
-if typeof(_)=="RBXScriptConnection"then
-_:Disconnect()
+for _,aa in ipairs(H)do
+if typeof(aa)=="RBXScriptConnection"then
+aa:Disconnect()
 end
 end
 H={}
 
-for Z,_ in ipairs(workspace:GetDescendants())do
+for aa,_ in ipairs(workspace:GetDescendants())do
 if _:IsA"Highlight"and _.Name=="PersistentHighlight"then
 _:Destroy()
 end
 end
 
-local Z=getLocalCharacter()
-if Z then
-local _=Z:FindFirstChildOfClass"Humanoid"
-if _ then
-local aa=_:FindFirstChildOfClass"Animator"
+local aa=getLocalCharacter()
 if aa then
-for ab,ac in ipairs(aa:GetPlayingAnimationTracks())do
-ac:AdjustSpeed(1.0)
+local _=aa:FindFirstChildOfClass"Humanoid"
+if _ then
+local ab=_:FindFirstChildOfClass"Animator"
+if ab then
+for ac,ad in ipairs(ab:GetPlayingAnimationTracks())do
+ad:AdjustSpeed(1.0)
 end
 end
 end
